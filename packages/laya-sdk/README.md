@@ -83,6 +83,12 @@ accuracy loss — the transfer win above costs nothing in quality.
   Pass a Blob/object URL as `modelUrl` to bypass download entirely —
   `fetch` handles it.
 
+## Acknowledgements
+
+- [Laya](https://laya.convaiinnovations.com/) — the model this SDK runs on-device.
+- [Mattepiu/laya-onnx](https://huggingface.co/Mattepiu/laya-onnx) — the ONNX
+  weights and tokenizer this SDK loads.
+
 ## License
 
 MIT
