@@ -34,7 +34,7 @@ export function buildLayaInputs(
     instructions: string;
     options: string[];
     state: string;
-  }
+  },
 ): { inputIds: number[]; markers: number[] } {
   const ids = [
     enc.clsId,
@@ -84,15 +84,13 @@ export function resolveSpecialIds(tz: {
   encode?: unknown;
   decode?: unknown;
 }): { maskId: number; clsId: number; sepId: number } {
-  const fromProp = (v: unknown): number | undefined =>
-    typeof v === "number" ? v : undefined;
+  const fromProp = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
   const fromEncode = (token: string): number | undefined => {
     if (typeof tz.encode !== "function") return undefined;
     try {
-      const ids = (tz.encode as (text: string, opts: Record<string, unknown>) => unknown)(
-        token,
-        { add_special_tokens: false }
-      );
+      const ids = (tz.encode as (text: string, opts: Record<string, unknown>) => unknown)(token, {
+        add_special_tokens: false,
+      });
       if (!Array.isArray(ids) || ids.length !== 1 || typeof ids[0] !== "number") {
         return undefined;
       }
@@ -112,12 +110,12 @@ export function resolveSpecialIds(tz: {
     throw new Error(
       `laya: tokenizer is missing CLS/SEP/MASK ids ` +
         `(cls=${String(clsId)} sep=${String(sepId)} mask=${String(maskId)}, ` +
-        `hasEncode=${typeof tz.encode})`
+        `hasEncode=${typeof tz.encode})`,
     );
   }
   if (new Set([maskId, clsId, sepId]).size !== 3) {
     throw new Error(
-      `laya: tokenizer ids collapsed (cls=${clsId} sep=${sepId} mask=${maskId}) — refusing silent garbage`
+      `laya: tokenizer ids collapsed (cls=${clsId} sep=${sepId} mask=${maskId}) — refusing silent garbage`,
     );
   }
   return { maskId, clsId, sepId };

@@ -1,13 +1,13 @@
 {
   "name": "laya",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "type": "module",
   "scripts": {
     "test": "bun run --filter './packages/*' test",
     "build": "bun run --filter './packages/*' build"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  }
 }

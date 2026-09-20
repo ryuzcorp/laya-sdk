@@ -2,12 +2,7 @@ import { head } from "@ilha/router";
 import { atom, watch } from "ilha";
 import { Effect, Schema } from "effect";
 import { Decision, DecisionModel } from "effect/unstable/ai";
-import {
-  LAYA_INT8_ZIP_URL,
-  LAYA_REPO,
-  makeLayaDecisionLive,
-  type LayaRuntime,
-} from "laya-sdk";
+import { LAYA_INT8_ZIP_URL, LAYA_REPO, makeLayaDecisionLive, type LayaRuntime } from "laya-sdk";
 import { createLayaWorkerRuntime, type LayaWorkerHandle } from "../layaWorkerClient";
 
 type Qtype = "classify" | "probability" | "rate";
@@ -43,7 +38,7 @@ export default function Laya() {
         progress.set(
           label === "weights" && loaded !== undefined
             ? `weights ${(loaded / 1048576).toFixed(0)}MB${total ? ` / ${(total / 1048576).toFixed(0)}MB` : ""}`
-            : label
+            : label,
         );
       });
       await workerHandle.load();
@@ -108,8 +103,8 @@ export default function Laya() {
       const t0 = performance.now();
       const res = await Effect.runPromise(
         DecisionModel.decide(def, { input: state() }).pipe(
-          Effect.provide(makeLayaDecisionLive(rt))
-        )
+          Effect.provide(makeLayaDecisionLive(rt)),
+        ),
       );
       latency.set(`${Math.round(performance.now() - t0)}ms local`);
       answer.set(JSON.stringify(res.answers, null, 2));
@@ -133,8 +128,8 @@ export default function Laya() {
       <div class="card bg-base-100 shadow">
         <div class="card-body gap-2">
           <p class="text-sm opacity-70">
-            <code>{LAYA_REPO}</code> · int8 ONNX · runs fully in your browser
-            via transformers.js tokenizer + onnxruntime-web.
+            <code>{LAYA_REPO}</code> · int8 ONNX · runs fully in your browser via transformers.js
+            tokenizer + onnxruntime-web.
           </p>
           <p class="text-sm">
             Status: <b>{status()}</b> {progress() ? <span>· {progress()}</span> : ""}
@@ -150,9 +145,7 @@ export default function Laya() {
             <select
               class="select select-bordered select-sm ml-2"
               value={qtype()}
-              onchange={(e) =>
-                qtype.set((e.target as HTMLSelectElement).value as Qtype)
-              }
+              onchange={(e) => qtype.set((e.target as HTMLSelectElement).value as Qtype)}
             >
               <option value="classify">classify (choice)</option>
               <option value="probability">probability (noul)</option>

@@ -24,7 +24,7 @@ const definition = Decision.make({
 const { answers } = await Effect.runPromise(
   DecisionModel.decide(definition, {
     input: "The database disk is 100% full and writes are failing.",
-  }).pipe(Effect.provide(makeLayaDecisionLive(rt)))
+  }).pipe(Effect.provide(makeLayaDecisionLive(rt))),
 );
 // => { urgent: { probability: 0.93… } }
 ```
@@ -34,11 +34,11 @@ const { answers } = await Effect.runPromise(
 ```ts
 await loadLayaRuntime({
   modelUrl: "https://my-cdn/laya_int8.onnx", // default: zipped HF int8 release
-  tokenizerRepo: "Mattepiu/laya-onnx",          // default
-  numThreads: 1,                                // default (no COOP/COEP needed)
-  executionProviders: ["wasm"],                 // default
-  onProgress: (label, loaded, total) => {},     // download progress
-  cacheDir: "~/.laya",                        // Node only: default ~/.laya
+  tokenizerRepo: "Mattepiu/laya-onnx", // default
+  numThreads: 1, // default (no COOP/COEP needed)
+  executionProviders: ["wasm"], // default
+  onProgress: (label, loaded, total) => {}, // download progress
+  cacheDir: "~/.laya", // Node only: default ~/.laya
 });
 ```
 
@@ -60,11 +60,12 @@ Rules: **marker dim is fixed at 2** (binary choice and noul only),
 Default is `laya_int8.zip` (434 MB, hosted on HF with CORS + `content-length`).
 Self-hosting instead? Either zip the `.onnx` (one entry) or
 `gzip -9 -k laya_int8.onnx` (554 MB -> 434 MB, measured) and serve with CORS
-+ `content-length` (progress bar), **without** `content-encoding` — the SDK
-decodes from the file suffix itself. (If your host auto-gzips with
-`content-encoding: gzip`, `fetch` already decoded it and the SDK skips
-re-decoding.) Brotli is skipped: marginal extra saving, spottier browser
-support.
+
+- `content-length` (progress bar), **without** `content-encoding` — the SDK
+  decodes from the file suffix itself. (If your host auto-gzips with
+  `content-encoding: gzip`, `fetch` already decoded it and the SDK skips
+  re-decoding.) Brotli is skipped: marginal extra saving, spottier browser
+  support.
 
 Quantization stays on the shelf until an eval harness can prove zero
 accuracy loss — the transfer win above costs nothing in quality.

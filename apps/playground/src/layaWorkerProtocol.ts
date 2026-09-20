@@ -8,9 +8,7 @@ export interface ScoreArgs {
   state: string;
 }
 
-export type InMsg =
-  | { id: number; kind: "load" }
-  | { id: number; kind: "score"; args: ScoreArgs };
+export type InMsg = { id: number; kind: "load" } | { id: number; kind: "score"; args: ScoreArgs };
 
 export type OutMsg =
   | { id: number; kind: "progress"; label: string; loaded?: number; total?: number }

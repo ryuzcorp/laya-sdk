@@ -1,5 +1,11 @@
 import type { InferenceSession, Tensor } from "onnxruntime-web";
-import { buildLayaInputs, extractOnnxFromZip, resolveSpecialIds, softmax, type QtypeWord } from "./pure.js";
+import {
+  buildLayaInputs,
+  extractOnnxFromZip,
+  resolveSpecialIds,
+  softmax,
+  type QtypeWord,
+} from "./pure.js";
 import { LAYA_REPO, resolveModelUrl, type LayaOptions } from "./models.js";
 import { clearCachedModel, getCachedModel, putCachedModel } from "./cache.js";
 
@@ -19,7 +25,7 @@ export interface LayaRuntime {
     qtypeWord: QtypeWord,
     instructions: string,
     options: string[],
-    state: string
+    state: string,
   ): Promise<number[]>;
 }
 
@@ -27,22 +33,20 @@ function toFeeds(
   ort: OrtNS,
   inputIds: number[],
   markers: number[],
-  qtype: number
+  qtype: number,
 ): Record<string, Tensor> {
   const big = (xs: number[]) => new BigInt64Array(xs.map((x) => BigInt(x)));
   return {
     input_ids: new ort.Tensor("int64", big(inputIds), [1, inputIds.length]),
-    attention_mask: new ort.Tensor(
-      "int64",
-      new BigInt64Array(inputIds.length).fill(1n),
-      [1, inputIds.length]
-    ),
+    attention_mask: new ort.Tensor("int64", new BigInt64Array(inputIds.length).fill(1n), [
+      1,
+      inputIds.length,
+    ]),
     marker_pos: new ort.Tensor("int64", big(markers), [1, markers.length]),
-    marker_mask: new ort.Tensor(
-      "bool",
-      new Uint8Array(markers.length).fill(1),
-      [1, markers.length]
-    ),
+    marker_mask: new ort.Tensor("bool", new Uint8Array(markers.length).fill(1), [
+      1,
+      markers.length,
+    ]),
     qtype: new ort.Tensor("int64", new BigInt64Array([BigInt(qtype)]), [1]),
   };
 }
@@ -54,15 +58,14 @@ async function maybeGunzip(
   url: string,
   buf: Uint8Array,
   res: Response,
-  onProgress?: (label: string, loaded?: number, total?: number) => void
+  onProgress?: (label: string, loaded?: number, total?: number) => void,
 ): Promise<Uint8Array> {
   const encoded = res.headers.get("content-encoding") ?? "";
-  const wantsGzip =
-    url.split("?")[0].toLowerCase().endsWith(".gz") && !/gzip/i.test(encoded);
+  const wantsGzip = url.split("?")[0].toLowerCase().endsWith(".gz") && !/gzip/i.test(encoded);
   if (!wantsGzip) return buf;
   onProgress?.("decompress");
   const raw = await new Response(
-    new Blob([buf.buffer as ArrayBuffer]).stream().pipeThrough(new DecompressionStream("gzip"))
+    new Blob([buf.buffer as ArrayBuffer]).stream().pipeThrough(new DecompressionStream("gzip")),
   ).arrayBuffer();
   return new Uint8Array(raw);
 }
@@ -103,8 +106,7 @@ async function init(options: LayaOptions): Promise<LayaRuntime> {
     },
   });
   const encoder: LayaEncoder = {
-    encode: (text: string) =>
-      tz.encode(text, { add_special_tokens: false }) as number[],
+    encode: (text: string) => tz.encode(text, { add_special_tokens: false }) as number[],
     ...resolveSpecialIds(tz),
   };
   const modelUrl = resolveModelUrl(options);
@@ -140,10 +142,12 @@ async function init(options: LayaOptions): Promise<LayaRuntime> {
   };
   const hit = await getCachedModel(modelUrl, options.cacheDir);
   if (hit) onProgress?.("cache", hit.bytes.length, hit.bytes.length);
-  let modelBytes: Uint8Array = hit?.bytes ?? (await download().then(async (b) => {
-    await putCachedModel(modelUrl, b, options.cacheDir);
-    return b;
-  }));
+  let modelBytes: Uint8Array =
+    hit?.bytes ??
+    (await download().then(async (b) => {
+      await putCachedModel(modelUrl, b, options.cacheDir);
+      return b;
+    }));
   const createSession = () =>
     ort.InferenceSession.create(modelBytes.buffer as ArrayBuffer, {
       executionProviders: options.executionProviders ?? ["wasm"],
@@ -174,18 +178,14 @@ async function init(options: LayaOptions): Promise<LayaRuntime> {
       // Known exports fix marker dim at 2. Binary choice and noul only.
       if (markers.length !== expectedMarkers) {
         throw new Error(
-          `laya: this export takes exactly ${expectedMarkers} options (got ${markers.length}) — use binary choice or noul`
+          `laya: this export takes exactly ${expectedMarkers} options (got ${markers.length}) — use binary choice or noul`,
         );
       }
       const out = await session.run(toFeeds(ort, inputIds, markers, qtype));
       const data = out[outputName]?.data as ArrayLike<number> | undefined;
-      const logits = (data ? Array.from(data) : [])
-        .slice(0, markers.length)
-        .map(Number);
+      const logits = (data ? Array.from(data) : []).slice(0, markers.length).map(Number);
       if (logits.length !== markers.length) {
-        throw new Error(
-          `laya: expected ${markers.length} logits, got ${logits.length}`
-        );
+        throw new Error(`laya: expected ${markers.length} logits, got ${logits.length}`);
       }
       return softmax(logits);
     },

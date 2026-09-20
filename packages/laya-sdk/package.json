@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Effect-first TypeScript SDK for local Laya decision models (ONNX, browser or Node)",
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -12,10 +16,6 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "bun test",
@@ -26,12 +26,12 @@
     "fflate": "^0.8.3",
     "onnxruntime-web": "1.22"
   },
-  "peerDependencies": {
-    "effect": "^4.0.0-rc.112"
-  },
   "devDependencies": {
     "bun-types": "latest",
     "effect": "^4.0.0-rc.112",
     "typescript": "^6"
+  },
+  "peerDependencies": {
+    "effect": "^4.0.0-rc.112"
   }
 }

@@ -3,10 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [
-    pages(),
-    tailwindcss(),
-  ],
+  plugins: [pages(), tailwindcss()],
   resolve: {
     tsconfigPaths: true,
   },

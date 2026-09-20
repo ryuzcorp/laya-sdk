@@ -63,7 +63,10 @@ export function createLayaWorkerRuntime(onProgress: ProgressFn): LayaWorkerHandl
       // working equivalent: dispose() interrupts run → scope closes → the
       // DedicatedWorker is terminated.
       setup: ({ worker, scope }) =>
-        Scope.addFinalizer(scope, Effect.sync(() => worker.terminate())).pipe(Effect.as(worker)),
+        Scope.addFinalizer(
+          scope,
+          Effect.sync(() => worker.terminate()),
+        ).pipe(Effect.as(worker)),
       listen: ({ port, emit, deferred }) =>
         Effect.sync(() => {
           port.onmessage = (event: MessageEvent) => emit(event.data);
@@ -75,11 +78,11 @@ export function createLayaWorkerRuntime(onProgress: ProgressFn): LayaWorkerHandl
                   reason: new WorkerError.WorkerReceiveError({
                     message: `laya: worker error (${event instanceof ErrorEvent ? event.message : "unknown"})`,
                   }),
-                })
-              )
+                }),
+              ),
             );
         }),
-    })
+    }),
   );
   const SpawnerLive = Worker.layerSpawner((_id: number) => new LayaWorker());
 
@@ -107,9 +110,11 @@ export function createLayaWorkerRuntime(onProgress: ProgressFn): LayaWorkerHandl
       fiber = Effect.runFork(
         Effect.onExit(boot, (exit) =>
           Exit.isFailure(exit)
-            ? Effect.sync(() => failAll(`laya: worker failed to start (${String(exit.cause).slice(0, 300)})`))
-            : Effect.sync(() => {})
-        )
+            ? Effect.sync(() =>
+                failAll(`laya: worker failed to start (${String(exit.cause).slice(0, 300)})`),
+              )
+            : Effect.sync(() => {}),
+        ),
       );
     }
   };
@@ -117,7 +122,7 @@ export function createLayaWorkerRuntime(onProgress: ProgressFn): LayaWorkerHandl
   const send = (msg: InMsg): Promise<void> => {
     if (dead) return Promise.reject(new Error("laya: worker stopped"));
     return spawnedP.then(() =>
-      Effect.runPromise((workerRef as Worker.Worker<OutMsg, InMsg>).send(msg))
+      Effect.runPromise((workerRef as Worker.Worker<OutMsg, InMsg>).send(msg)),
     );
   };
 
@@ -140,14 +145,16 @@ export function createLayaWorkerRuntime(onProgress: ProgressFn): LayaWorkerHandl
     qtypeWord: QtypeWord,
     instructions: string,
     options: string[],
-    state: string
+    state: string,
   ): Promise<number[]> =>
-    request({ id: ++seq, kind: "score", args: { qtype, qtypeWord, instructions, options, state } }).then(
-      (msg) => {
-        if (msg.kind !== "result") throw new Error("laya: unexpected worker reply");
-        return msg.probs;
-      }
-    );
+    request({
+      id: ++seq,
+      kind: "score",
+      args: { qtype, qtypeWord, instructions, options, state },
+    }).then((msg) => {
+      if (msg.kind !== "result") throw new Error("laya: unexpected worker reply");
+      return msg.probs;
+    });
 
   const runtime = {
     score,

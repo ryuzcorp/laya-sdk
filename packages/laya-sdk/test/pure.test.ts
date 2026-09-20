@@ -87,8 +87,7 @@ describe("resolveSpecialIds", () => {
     };
     const ids = resolveSpecialIds({
       encode: (t: string) => [vocab[t]!],
-      decode: (ids: number[]) =>
-        Object.keys(vocab).find((k) => vocab[k] === ids[0]) ?? "",
+      decode: (ids: number[]) => Object.keys(vocab).find((k) => vocab[k] === ids[0]) ?? "",
     });
     expect(ids).toEqual({ maskId: 50284, clsId: 50281, sepId: 50282 });
   });
@@ -96,14 +95,12 @@ describe("resolveSpecialIds", () => {
     expect(() => resolveSpecialIds({})).toThrow(/missing CLS\/SEP\/MASK/);
   });
   test("mis-resolved ids refused", () => {
-    expect(() =>
-      resolveSpecialIds({ encode: () => [50280], decode: () => "[UNK]" })
-    ).toThrow();
+    expect(() => resolveSpecialIds({ encode: () => [50280], decode: () => "[UNK]" })).toThrow();
   });
   test("collapsed ids refused", () => {
-    expect(() =>
-      resolveSpecialIds({ mask_token_id: 5, cls_token_id: 5, sep_token_id: 5 })
-    ).toThrow(/collapsed/);
+    expect(() => resolveSpecialIds({ mask_token_id: 5, cls_token_id: 5, sep_token_id: 5 })).toThrow(
+      /collapsed/,
+    );
   });
 });
 
@@ -116,9 +113,9 @@ describe("models", () => {
     const payload = new Uint8Array([1, 2, 3, 4]);
     const zipped = zipSync({ "laya_int8.onnx": payload });
     expect(extractOnnxFromZip(zipped)).toEqual(payload);
-    expect(() =>
-      extractOnnxFromZip(zipSync({ "a.onnx": payload, "b.onnx": payload }))
-    ).toThrow(/exactly one/);
+    expect(() => extractOnnxFromZip(zipSync({ "a.onnx": payload, "b.onnx": payload }))).toThrow(
+      /exactly one/,
+    );
   });
   test("modelUrl override wins", () => {
     expect(resolveModelUrl({ modelUrl: "https://x/y.onnx" })).toBe("https://x/y.onnx");

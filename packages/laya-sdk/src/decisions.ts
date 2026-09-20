@@ -17,18 +17,18 @@ export const makeLayaDecisionLive = (rt: LayaRuntime) =>
             if (decision._tag === "Classify") {
               const labels = Object.keys(decision.criteria);
               const probs = yield* Effect.promise(() =>
-                rt.score(0, "choice", decision.instructions, labels, input)
+                rt.score(0, "choice", decision.instructions, labels, input),
               );
               answers[name] = { _tag: "Classify", ...toClassifyAnswer(labels, probs) };
             } else if (decision._tag === "Probability") {
               const probs = yield* Effect.promise(() =>
-                rt.score(2, "noul", decision.instructions, ["false", "true"], input)
+                rt.score(2, "noul", decision.instructions, ["false", "true"], input),
               );
               answers[name] = { _tag: "Probability", ...toProbabilityAnswer(probs[1]) };
             } else {
               const levels = [...decision.criteria];
               const probs = yield* Effect.promise(() =>
-                rt.score(1, "score", decision.instructions, levels, input)
+                rt.score(1, "score", decision.instructions, levels, input),
               );
               answers[name] = { _tag: "Rate", ...toRateAnswer(levels, probs) };
             }
@@ -38,6 +38,5 @@ export const makeLayaDecisionLive = (rt: LayaRuntime) =>
             usage: { inputTokens: undefined, outputTokens: undefined },
           } satisfies DecisionModel.ProviderResponse;
         }),
-    })
+    }),
   );
-

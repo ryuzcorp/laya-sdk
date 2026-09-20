@@ -47,7 +47,10 @@ function req<T>(r: IDBRequest<T>): Promise<T> {
   });
 }
 
-async function withStore<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => Promise<T>): Promise<T> {
+async function withStore<T>(
+  mode: IDBTransactionMode,
+  fn: (s: IDBObjectStore) => Promise<T>,
+): Promise<T> {
   const db = await openDb();
   try {
     const tx = db.transaction(STORE, mode);
@@ -66,7 +69,12 @@ async function withStore<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) =>
 function sane(row: unknown): CachedModel | undefined {
   if (!row || typeof row !== "object") return undefined;
   const r = row as Partial<StoredRow>;
-  const bytes = r.bytes instanceof Uint8Array ? r.bytes : r.bytes instanceof ArrayBuffer ? new Uint8Array(r.bytes) : undefined;
+  const bytes =
+    r.bytes instanceof Uint8Array
+      ? r.bytes
+      : r.bytes instanceof ArrayBuffer
+        ? new Uint8Array(r.bytes)
+        : undefined;
   if (!bytes || !r.size || bytes.length !== r.size) return undefined;
   return { bytes, size: r.size, savedAt: r.savedAt ?? 0 };
 }
@@ -136,7 +144,7 @@ async function nodeGet(url: string, cacheDir?: string): Promise<CachedModel | un
     const dir = resolveCacheDir(cacheDir);
     const base = fileBase(url);
     const meta: FileMeta = JSON.parse(
-      new TextDecoder().decode(await fs.readFile(`${dir}/${base}.json`))
+      new TextDecoder().decode(await fs.readFile(`${dir}/${base}.json`)),
     );
     if (meta.url !== url || !meta.size) return undefined;
     const st = await fs.stat(`${dir}/${base}.bin`);
@@ -181,7 +189,7 @@ async function nodeClear(url?: string, cacheDir?: string): Promise<void> {
     await Promise.all(
       names
         .filter((n) => n.endsWith(".bin") || n.endsWith(".json"))
-        .map((n) => fs.rm(`${dir}/${n}`, { force: true }))
+        .map((n) => fs.rm(`${dir}/${n}`, { force: true })),
     );
   } catch {
     // best effort
@@ -190,7 +198,10 @@ async function nodeClear(url?: string, cacheDir?: string): Promise<void> {
 
 // --- Public API: backend dispatch -----------------------------------------
 
-export async function getCachedModel(url: string, cacheDir?: string): Promise<CachedModel | undefined> {
+export async function getCachedModel(
+  url: string,
+  cacheDir?: string,
+): Promise<CachedModel | undefined> {
   if (isNode()) return nodeGet(url, cacheDir);
   try {
     const row = await withStore("readonly", (s) => req(s.get(url)));
@@ -200,7 +211,11 @@ export async function getCachedModel(url: string, cacheDir?: string): Promise<Ca
   }
 }
 
-export async function putCachedModel(url: string, bytes: Uint8Array, cacheDir?: string): Promise<void> {
+export async function putCachedModel(
+  url: string,
+  bytes: Uint8Array,
+  cacheDir?: string,
+): Promise<void> {
   if (isNode()) {
     await nodePut(url, bytes, cacheDir);
     return;

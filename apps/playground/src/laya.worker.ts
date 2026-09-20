@@ -20,37 +20,35 @@ const BrowserRunnerLive = Layer.effect(
   WorkerRunner.WorkerRunnerPlatform,
   Effect.succeed({
     start: <O, I>() =>
-      Effect.sync(
-        (): WorkerRunner.WorkerRunner<O, I> => {
-          const runner: WorkerRunner.WorkerRunner<OutMsg, InMsg> = {
-            run: (handler) =>
-              Effect.acquireUseRelease(
-                Effect.sync(() => {
-                  const listener = (event: MessageEvent) => {
-                    const data = event.data as readonly [0, InMsg] | readonly [1];
-                    if (data[0] !== 0) return;
-                    const out = handler(0, data[1]);
-                    // Our handler returns void; runPromise covers the
-                    // interface's Effect-returning case with no runtime handle.
-                    if (Effect.isEffect(out)) void Effect.runPromise(out as Effect.Effect<void>);
-                  };
-                  workerScope.addEventListener("message", listener);
-                  return listener;
-                }),
-                () => Effect.never,
-                (listener) => Effect.sync(() => workerScope.removeEventListener("message", listener))
-              ),
-            send: (_portId, message) => Effect.sync(() => workerScope.postMessage([1, message])),
-            sendUnsafe: (_portId, message) => workerScope.postMessage([1, message]),
-          };
-          workerScope.postMessage([0]);
-          // SAFETY: start is only ever instantiated as start<OutMsg, InMsg>
-          // by main below; the generic signature just satisfies the platform
-          // service shape shared with Node/Bun adapters.
-          return runner as unknown as WorkerRunner.WorkerRunner<O, I>;
-        }
-      ),
-  })
+      Effect.sync((): WorkerRunner.WorkerRunner<O, I> => {
+        const runner: WorkerRunner.WorkerRunner<OutMsg, InMsg> = {
+          run: (handler) =>
+            Effect.acquireUseRelease(
+              Effect.sync(() => {
+                const listener = (event: MessageEvent) => {
+                  const data = event.data as readonly [0, InMsg] | readonly [1];
+                  if (data[0] !== 0) return;
+                  const out = handler(0, data[1]);
+                  // Our handler returns void; runPromise covers the
+                  // interface's Effect-returning case with no runtime handle.
+                  if (Effect.isEffect(out)) void Effect.runPromise(out as Effect.Effect<void>);
+                };
+                workerScope.addEventListener("message", listener);
+                return listener;
+              }),
+              () => Effect.never,
+              (listener) => Effect.sync(() => workerScope.removeEventListener("message", listener)),
+            ),
+          send: (_portId, message) => Effect.sync(() => workerScope.postMessage([1, message])),
+          sendUnsafe: (_portId, message) => workerScope.postMessage([1, message]),
+        };
+        workerScope.postMessage([0]);
+        // SAFETY: start is only ever instantiated as start<OutMsg, InMsg>
+        // by main below; the generic signature just satisfies the platform
+        // service shape shared with Node/Bun adapters.
+        return runner as unknown as WorkerRunner.WorkerRunner<O, I>;
+      }),
+  }),
 );
 
 // Tiny promise-chain mutex: ORT session.run calls must not overlap.
@@ -74,7 +72,7 @@ const replyError = (
   runner: WorkerRunner.WorkerRunner<OutMsg, InMsg>,
   portId: number,
   id: number,
-  message: unknown
+  message: unknown,
 ): Effect.Effect<void> =>
   runner.send(portId, {
     id,
@@ -85,7 +83,7 @@ const replyError = (
 const handleJob = (
   runner: WorkerRunner.WorkerRunner<OutMsg, InMsg>,
   portId: number,
-  msg: InMsg
+  msg: InMsg,
 ): Promise<void> =>
   mutex.run(async () => {
     if (msg.kind === "load") {
@@ -113,7 +111,7 @@ const handleJob = (
         msg.args.qtypeWord,
         msg.args.instructions,
         msg.args.options,
-        msg.args.state
+        msg.args.state,
       );
       await Effect.runPromise(runner.send(portId, { id: msg.id, kind: "result", probs }));
     } catch (e) {
@@ -128,7 +126,11 @@ const main = Effect.gen(function* () {
     void handleJob(runner, portId, msg).catch(() => {
       // Unreachable: every branch above replies or catches. Last resort
       // keeps one bad job from killing the runner silently.
-      runner.sendUnsafe(portId, { id: (msg as InMsg).id, kind: "error", message: "laya: job failed" });
+      runner.sendUnsafe(portId, {
+        id: (msg as InMsg).id,
+        kind: "error",
+        message: "laya: job failed",
+      });
     });
   });
 });
