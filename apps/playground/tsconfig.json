@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "jsx": "react-jsx",
+    "jsxImportSource": "ilha",
+    "types": ["vite/client"],
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

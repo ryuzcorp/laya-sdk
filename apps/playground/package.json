@@ -1,0 +1,25 @@
+{
+  "name": "playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3",
+    "@ilha/router": "^0.11.5",
+    "effect": "^4.0.0-rc.112",
+    "ilha": "^0.14.4",
+    "laya-sdk": "workspace:*",
+    "onnxruntime-web": "1.22"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "daisyui": "^5.7.22",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6",
+    "vite": "^8.2.1"
+  }
+}
