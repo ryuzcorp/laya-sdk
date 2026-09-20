@@ -4,6 +4,10 @@ Effect-first TypeScript SDK for **local Laya decision models** (ONNX).
 Same `Decision` shapes as a cloud provider, answered on-device — browser or
 Node. No API keys, no egress.
 
+```sh
+npm install laya-sdk effect   # effect is a peer dependency (v4)
+```
+
 ```ts
 import { loadLayaRuntime, makeLayaDecisionLive } from "laya-sdk";
 import { Decision, DecisionModel } from "effect/unstable/ai";
@@ -46,7 +50,8 @@ await loadLayaRuntime({
 `.gz` URLs are gunzipped (see Transfer below). Decoded weights are cached
 keyed by URL — IndexedDB in browsers, `~/.laya` files in Node
 (`LAYA_CACHE_DIR` env or `cacheDir` option overrides) — repeat loads skip
-the network entirely.
+the network entirely. `clearCachedModel()` drops the cached weights
+(force-refresh a re-released model at the same URL).
 
 ## Model (measured 2026-09-20)
 
@@ -77,3 +82,7 @@ accuracy loss — the transfer win above costs nothing in quality.
   browsers, `~/.laya` in Node); repeat loads read from disk (no network).
   Pass a Blob/object URL as `modelUrl` to bypass download entirely —
   `fetch` handles it.
+
+## License
+
+MIT

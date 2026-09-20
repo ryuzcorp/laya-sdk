@@ -1,20 +1,8 @@
-export { LAYA_INT8_ZIP_URL, LAYA_REPO, resolveModelUrl, type LayaOptions } from "./models.js";
-export {
-  buildLayaInputs,
-  extractOnnxFromZip,
-  resolveSpecialIds,
-  softmax,
-  toClassifyAnswer,
-  toProbabilityAnswer,
-  toRateAnswer,
-  type QtypeWord,
-} from "./pure.js";
-export { loadLayaRuntime, type LayaEncoder, type LayaRuntime } from "./runtime.js";
+// Public surface: everything a consumer needs to answer Effect `Decision`s
+// locally. Model/transport/cache internals stay unexported so they can change
+// without a major bump.
 export { makeLayaDecisionLive } from "./decisions.js";
-export {
-  clearCachedModel,
-  getCachedModel,
-  putCachedModel,
-  resolveCacheDir,
-  type CachedModel,
-} from "./cache.js";
+export { loadLayaRuntime, type LayaEncoder, type LayaRuntime } from "./runtime.js";
+export { type LayaOptions } from "./models.js";
+export { clearCachedModel } from "./cache.js";
+export { type QtypeWord } from "./pure.js";

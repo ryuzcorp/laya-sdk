@@ -2,12 +2,32 @@
   "name": "laya-sdk",
   "version": "0.1.0",
   "description": "Effect-first TypeScript SDK for local Laya decision models (ONNX, browser or Node)",
+  "keywords": [
+    "classification",
+    "decision",
+    "effect",
+    "int8",
+    "laya",
+    "local-first",
+    "onnx",
+    "onnxruntime",
+    "wasm"
+  ],
+  "homepage": "https://github.com/ryuzcorp/laya-sdk#readme",
+  "bugs": "https://github.com/ryuzcorp/laya-sdk/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryuzcorp/laya-sdk.git",
+    "directory": "packages/laya-sdk"
+  },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,7 +39,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "bun test",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepack": "npm run clean && npm run build"
   },
   "dependencies": {
     "@huggingface/transformers": "3",
@@ -27,7 +48,7 @@
     "onnxruntime-web": "1.22"
   },
   "devDependencies": {
-    "bun-types": "latest",
+    "bun-types": "^1.4.2",
     "effect": "^4.0.0-rc.112",
     "typescript": "^6"
   },

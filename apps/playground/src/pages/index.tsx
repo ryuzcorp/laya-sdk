@@ -2,7 +2,7 @@ import { head } from "@ilha/router";
 import { atom, watch } from "ilha";
 import { Effect, Schema } from "effect";
 import { Decision, DecisionModel } from "effect/unstable/ai";
-import { LAYA_INT8_ZIP_URL, LAYA_REPO, makeLayaDecisionLive, type LayaRuntime } from "laya-sdk";
+import { makeLayaDecisionLive, type LayaRuntime } from "laya-sdk";
 import { createLayaWorkerRuntime, type LayaWorkerHandle } from "../layaWorkerClient";
 
 type Qtype = "classify" | "probability" | "rate";
@@ -128,8 +128,8 @@ export default function Laya() {
       <div class="card bg-base-100 shadow">
         <div class="card-body gap-2">
           <p class="text-sm opacity-70">
-            <code>{LAYA_REPO}</code> · int8 ONNX · runs fully in your browser via transformers.js
-            tokenizer + onnxruntime-web.
+            <code>Mattepiu/laya-onnx</code> · int8 ONNX · runs fully in your browser via
+            transformers.js tokenizer + onnxruntime-web.
           </p>
           <p class="text-sm">
             Status: <b>{status()}</b> {progress() ? <span>· {progress()}</span> : ""}
@@ -212,7 +212,9 @@ export default function Laya() {
       ) : (
         ""
       )}
-      <p class="text-xs opacity-50">Weights: {LAYA_INT8_ZIP_URL}</p>
+      <p class="text-xs opacity-50">
+        Weights: https://huggingface.co/buckets/ryuz/laya/resolve/laya_int8.zip
+      </p>
     </div>
   );
 }
