@@ -12,14 +12,34 @@ let rt: LayaRuntime | undefined;
 export default function Laya() {
   head({ title: "Laya" });
 
+  // Shareable URLs, classifier.dev style: ?labels=a,b&text=... (+ aliases
+  // input/q/state for text, classes/categories/options for labels).
+  const qp = new URLSearchParams(location.search);
+  const qpGet = (...keys: string[]) => {
+    for (const k of keys) {
+      const v = qp.get(k);
+      if (v !== null && v !== "") return v;
+    }
+    return undefined;
+  };
+  const qpType = qpGet("type", "qtype");
+  const qpLabels = qpGet("labels", "classes", "categories", "options", "levels")
+    ?.split(/[\n,]/)
+    .map((o) => o.trim())
+    .filter(Boolean)
+    .join("\n");
+  const autoRun = qp.get("run") === "1" || qp.get("autorun") === "1";
+
   const status = atom("idle");
   const progress = atom("");
-  const qtype = atom<Qtype>("classify");
-  const instructions = atom("Which team should handle this?");
-  const optionsText = atom("billing\ntechnical");
-  const falseDesc = atom("No time pressure");
-  const trueDesc = atom("Needs action now");
-  const state = atom("My card was charged twice, please fix this today");
+  const qtype = atom<Qtype>(qpType === "probability" || qpType === "rate" ? qpType : "classify");
+  const instructions = atom(qpGet("instructions") ?? "Which team should handle this?");
+  const optionsText = atom(qpLabels ?? "billing\ntechnical");
+  const falseDesc = atom(qpGet("false") ?? "No time pressure");
+  const trueDesc = atom(qpGet("true") ?? "Needs action now");
+  const state = atom(
+    qpGet("text", "input", "q", "state") ?? "My card was charged twice, please fix this today",
+  );
   const answer = atom("");
   const latency = atom("");
   const msg = atom("");
@@ -45,11 +65,35 @@ export default function Laya() {
       rt = workerHandle.runtime;
       status.set("ready");
       progress.set("");
+      if (autoRun) void run();
     } catch (e) {
       status.set("error");
       msg.set(e instanceof Error ? e.message : "Model failed to load");
     } finally {
       busy.set(false);
+    }
+  };
+
+  // Keep the URL shareable: every run writes the current form back to ?…
+  const syncUrl = (options: string[]) => {
+    const out = new URLSearchParams();
+    out.set("type", qtype());
+    out.set("instructions", instructions());
+    out.set("labels", options.join(","));
+    if (qtype() === "probability") {
+      out.set("false", falseDesc());
+      out.set("true", trueDesc());
+    }
+    out.set("text", state());
+    history.replaceState(null, "", `?${out}`);
+  };
+
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      msg.set("Link copied");
+    } catch {
+      msg.set("Copy failed — copy the URL manually");
     }
   };
 
@@ -69,6 +113,7 @@ export default function Laya() {
     busy.set(true);
     msg.set("");
     answer.set("");
+    syncUrl(options);
     try {
       const def =
         qtype() === "classify"
@@ -124,7 +169,17 @@ export default function Laya() {
 
   return (
     <div class="mx-auto mt-8 flex max-w-xl flex-col gap-4 px-4">
-      <h1 class="text-2xl font-bold">Laya test view</h1>
+      <div class="flex items-baseline justify-between">
+        <h1 class="text-2xl font-bold">Laya test view</h1>
+        <a
+          class="link text-sm opacity-70"
+          href="https://github.com/ryuzcorp/laya-sdk"
+          target="_blank"
+          rel="noopener"
+        >
+          Source
+        </a>
+      </div>
       <div class="card bg-base-100 shadow">
         <div class="card-body gap-2">
           <p class="text-sm opacity-70">
@@ -138,12 +193,12 @@ export default function Laya() {
       </div>
       {msg() ? <div class="alert alert-error text-sm">{msg()}</div> : ""}
       <div class="card bg-base-100 shadow">
-        <div class="card-body gap-2">
+        <div class="card-body gap-3">
           <h2 class="font-bold">Decision</h2>
-          <label class="text-sm opacity-70">
-            Question type
+          <label class="form-control w-full">
+            <span class="label label-text py-1">Question type</span>
             <select
-              class="select select-bordered select-sm ml-2"
+              class="select select-bordered select-sm w-full"
               value={qtype()}
               onchange={(e) => qtype.set((e.target as HTMLSelectElement).value as Qtype)}
             >
@@ -152,52 +207,72 @@ export default function Laya() {
               <option value="rate">rate (score)</option>
             </select>
           </label>
-          <input
-            class="input input-bordered input-sm"
-            placeholder="Instructions"
-            value={instructions()}
-            oninput={(e) => instructions.set((e.target as HTMLInputElement).value)}
-          />
+          <label class="form-control w-full">
+            <span class="label label-text py-1">Instructions</span>
+            <input
+              class="input input-bordered input-sm w-full"
+              placeholder="Instructions"
+              value={instructions()}
+              oninput={(e) => instructions.set((e.target as HTMLInputElement).value)}
+            />
+          </label>
           {qtype() === "probability" ? (
             <div class="flex gap-2">
-              <input
-                class="input input-bordered input-sm"
-                placeholder="false means…"
-                value={falseDesc()}
-                oninput={(e) => falseDesc.set((e.target as HTMLInputElement).value)}
-              />
-              <input
-                class="input input-bordered input-sm"
-                placeholder="true means…"
-                value={trueDesc()}
-                oninput={(e) => trueDesc.set((e.target as HTMLInputElement).value)}
-              />
+              <label class="form-control flex-1">
+                <span class="label label-text py-1">False means</span>
+                <input
+                  class="input input-bordered input-sm w-full"
+                  placeholder="false means…"
+                  value={falseDesc()}
+                  oninput={(e) => falseDesc.set((e.target as HTMLInputElement).value)}
+                />
+              </label>
+              <label class="form-control flex-1">
+                <span class="label label-text py-1">True means</span>
+                <input
+                  class="input input-bordered input-sm w-full"
+                  placeholder="true means…"
+                  value={trueDesc()}
+                  oninput={(e) => trueDesc.set((e.target as HTMLInputElement).value)}
+                />
+              </label>
             </div>
           ) : (
-            <textarea
-              class="textarea textarea-bordered text-sm"
-              rows={3}
-              placeholder="Exactly two options (classify) or levels (rate), one per line"
-              oninput={(e) => optionsText.set((e.target as HTMLTextAreaElement).value)}
-            >
-              {optionsText()}
-            </textarea>
+            <label class="form-control w-full">
+              <span class="label label-text py-1">Options, one per line</span>
+              <textarea
+                class="textarea textarea-bordered w-full text-sm"
+                rows={3}
+                placeholder="Exactly two options (classify) or levels (rate), one per line"
+                oninput={(e) => optionsText.set((e.target as HTMLTextAreaElement).value)}
+              >
+                {optionsText()}
+              </textarea>
+            </label>
           )}
-          <textarea
-            class="textarea textarea-bordered text-sm"
-            rows={3}
-            placeholder="State to evaluate"
-            oninput={(e) => state.set((e.target as HTMLTextAreaElement).value)}
-          >
-            {state()}
-          </textarea>
-          <button
-            class="btn btn-primary btn-sm w-fit"
-            disabled={busy() || status() !== "ready"}
-            onclick={() => void run()}
-          >
-            Classify locally
-          </button>
+          <label class="form-control w-full">
+            <span class="label label-text py-1">Text to evaluate</span>
+            <textarea
+              class="textarea textarea-bordered w-full text-sm"
+              rows={3}
+              placeholder="State to evaluate"
+              oninput={(e) => state.set((e.target as HTMLTextAreaElement).value)}
+            >
+              {state()}
+            </textarea>
+          </label>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-primary btn-sm w-fit"
+              disabled={busy() || status() !== "ready"}
+              onclick={() => void run()}
+            >
+              Classify locally
+            </button>
+            <button class="btn btn-ghost btn-sm w-fit" onclick={() => void share()}>
+              Copy link
+            </button>
+          </div>
         </div>
       </div>
       {answer() ? (
@@ -213,7 +288,10 @@ export default function Laya() {
         ""
       )}
       <p class="text-xs opacity-50">
-        Weights: https://huggingface.co/buckets/ryuz/laya/resolve/laya_int8.zip
+        Weights: https://huggingface.co/buckets/ryuz/laya/resolve/laya_int8.zip ·{" "}
+        <a class="link" href="https://github.com/ryuzcorp/laya-sdk" target="_blank" rel="noopener">
+          Source
+        </a>
       </p>
     </div>
   );
